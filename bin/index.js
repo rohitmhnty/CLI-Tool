@@ -16,7 +16,7 @@ try {
     '--tree': String,
     '--help': Boolean,
     '--version': Boolean,
-    '--init': String, // 👈 Accepts a string value for project name
+    '--init': String,
   });
 
   debug('Received args', args);
@@ -25,7 +25,7 @@ try {
     const config = getConfig();
     start(config);
   } else if (args['--init']) {
-    init(args['--init']); // 👈 Calls init with project name
+    init({ projectName: args['--init'] }); // ✅ Pass as object
   } else if (args['--tree']) {
     tree({ projectName: args['--tree'] });
   } else if (args['--help']) {

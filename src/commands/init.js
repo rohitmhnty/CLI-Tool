@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 const chalk = require('chalk');
+const readline = require('readline');
+const { exec } = require('child_process');
 
 function createReactApp(projectName) {
   const currentDir = process.cwd();
@@ -49,7 +50,8 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);`
+root.render(<App />);
+`
   );
 
   fs.writeFileSync(
@@ -58,26 +60,42 @@ root.render(<App />);`
 
 export default function App() {
   return <div>Hello, React Scaffold!</div>;
-}`
+}
+`
   );
 
   // .gitignore
   fs.writeFileSync(
     path.join(projectPath, '.gitignore'),
     `node_modules
-build`
+build
+`
   );
 
   console.log(chalk.green(`React app scaffold created in ${projectPath}`));
-  console.log(chalk.yellow('Running npm install... (this may take a few minutes)'));
 
-  try {
-    execSync('npm install', { cwd: projectPath, stdio: 'inherit' });
-  } catch (err) {
-    console.log(chalk.red('npm install failed. Please run it manually inside the project folder.'));
-  }
+  // Prompt for npm install
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
 
-  console.log(chalk.green('Setup complete!'));
+  rl.question(chalk.yellow('Do you want to install dependencies now? (y/n): '), (answer) => {
+    if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
+      console.log(chalk.yellow('Installing dependencies... This may take a few minutes.'));
+      exec('npm install', { cwd: projectPath }, (error, stdout, stderr) => {
+        if (error) {
+          console.log(chalk.red(`Error during npm install: ${error.message}`));
+        } else {
+          console.log(chalk.green('Dependencies installed successfully!'));
+        }
+        rl.close();
+      });
+    } else {
+      console.log(chalk.blue('You can install dependencies later by running "npm install" inside the project folder.'));
+      rl.close();
+    }
+  });
 }
 
 module.exports = function init({ projectName }) {
