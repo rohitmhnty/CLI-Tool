@@ -6,10 +6,20 @@ const Ajv = require('ajv');
 const debug = require('debug')('config:mgr');
 
 const ajv = new Ajv({ allErrors: true, strict: true });
-const configLoader = cosmiconfigSync('tool');
+const configLoader = cosmiconfigSync('tool', {
+  searchPlaces: [
+    'package.json',
+    '.toolrc',
+    '.toolrc.json',
+    '.toolrc.js',
+    'tool.config.js'
+  ]
+});
 
-module.exports = function getConfig() {
-  const result = configLoader.search(process.cwd());
+module.exports = function getConfig(customPath = null) {
+  const result = customPath
+    ? configLoader.load(customPath)
+    : configLoader.search(process.cwd());
 
   if (!result) {
     console.log(chalk.yellow('Could not find configuration, using default'));

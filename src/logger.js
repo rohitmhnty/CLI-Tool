@@ -8,4 +8,4 @@ module.exports = function createLogger(name) {
     highlight: (...args) => console.log(chalk.bgCyanBright(...args)),
     debug: debug(name)
   };
-}          
+};
