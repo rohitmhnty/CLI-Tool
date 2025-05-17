@@ -10,43 +10,49 @@ function printTree(dir, prefix = '', level = 0, maxLevel = 3) {
     process.exit(1);
   }
 
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
+    .filter(entry => !entry.name.endsWith('.DS_Store')) // Optional: ignore macOS junk
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   entries.forEach((entry, index) => {
     const isLast = index === entries.length - 1;
     const pointer = isLast ? '└── ' : '├── ';
     const entryPath = path.join(dir, entry.name);
-
-    // Check for special folders
-    const isSpecialFolder = (
+    const isSpecialFolder =
       entry.name === 'node_modules' ||
       entry.name === 'dist' ||
-      entry.name.startsWith('.')
-    );
+      entry.name.startsWith('.');
 
-    console.log(prefix + pointer + entry.name);
+    // Print only name for special folders (no recursion)
+    if (entry.isDirectory() && isSpecialFolder) {
+      console.log(prefix + pointer + chalk.blue(entry.name));
+      return;
+    }
 
-    if (
-      entry.isDirectory() &&
-      !isSpecialFolder &&
-      level < maxLevel
-    ) {
+    // Print normal folders and files
+    if (entry.isDirectory()) {
+      console.log(prefix + pointer + chalk.blue(entry.name));
       const newPrefix = prefix + (isLast ? '    ' : '│   ');
       printTree(entryPath, newPrefix, level + 1, maxLevel);
+    } else {
+      console.log(prefix + pointer + chalk.gray(entry.name));
     }
   });
 }
 
 module.exports = function tree({ projectName }) {
   if (!projectName) {
-    console.log(chalk.red('Please provide a project name for --tree'));
+    console.log(chalk.red('❌ Please provide a project name with --tree'));
     process.exit(1);
   }
 
-  const currentDir = process.cwd();
-  const parentDir = path.resolve(currentDir, '..');
-  const projectPath = path.resolve(parentDir, projectName);
+  const projectPath = path.resolve(process.cwd(), '..', projectName);
 
-  console.log(chalk.green(`Directory tree for project: ${projectPath}`));
+  if (!fs.existsSync(projectPath)) {
+    console.log(chalk.red(`❌ Project folder not found: ${projectPath}`));
+    process.exit(1);
+  }
+
+  console.log(chalk.green(`\n🗂 Directory tree for project: ${projectName}\n`));
   printTree(projectPath);
 };
